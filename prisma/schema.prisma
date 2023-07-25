@@ -1,0 +1,87 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String        @unique // external uuid
+  username    String?
+  name        String?
+  createdAt   DateTime      @default(now())
+  modifiedAt  DateTime      @default(now())
+  Transaction Transaction[]
+  UserBalance UserBalance[]
+}
+
+model Currency {
+  id          Int           @id @default(autoincrement())
+  name        String
+  createdAt   DateTime      @default(now())
+  modifiedAt  DateTime      @default(now())
+  Transaction Transaction[]
+  UserBalance UserBalance[]
+}
+
+model TransactionType {
+  id          Int                  @id @default(autoincrement())
+  name        String
+  direction   TransactionDirection @default(INCOME)
+  createdAt   DateTime             @default(now())
+  modifiedAt  DateTime             @default(now())
+  Transaction Transaction[]
+}
+
+model Transaction {
+  id                  Int               @id @default(autoincrement())
+  user                User              @relation(fields: [userId], references: [id])
+  userId              String
+  transactionType     TransactionType   @relation(fields: [transactionTypeId], references: [id])
+  transactionTypeId   Int
+  currency            Currency          @relation(fields: [currencyId], references: [id])
+  currencyId          Int
+  amount              Float
+  transactionDate     DateTime
+  balanceBefore       Float
+  balanceAfter        Float
+  status              TransactionStatus @default(PENDING)
+  txnErrorDescription String?
+  paymentProcessorId  String?
+  createdAt           DateTime          @default(now())
+  modifiedAt          DateTime          @default(now())
+}
+
+model UserBalance {
+  id         Int           @id @default(autoincrement())
+  user       User          @relation(fields: [userId], references: [id])
+  userId     String
+  currency   Currency      @relation(fields: [currencyId], references: [id])
+  currencyId Int
+  balance    Float
+  status     BalanceStatus @default(ACTIVE)
+  createdAt  DateTime      @default(now())
+  modifiedAt DateTime      @default(now())
+}
+
+enum TransactionDirection {
+  INCOME
+  EXPENSE
+}
+
+enum TransactionStatus {
+  PENDING
+  FAILED
+  COMPLETED
+}
+
+enum BalanceStatus {
+  ACTIVE
+  INACTIVE
+  BLOQUED
+}
